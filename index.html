@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html data-theme="light">
+
 <head>
     <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
     <link rel="icon" href="https://elastic.co/favicon.ico" type="image/x-icon">
@@ -42,185 +43,285 @@
         }
     </style>
 </head>
+
 <body>
-<div id="form">
+    <div id="form">
         <legend>Add an Elasticsearch layer</legend>
         <div class="">
             <label for="index">Index</label>
-                <input required type="text" id="index" />
+            <input required type="text" id="index" value="location" />
 
             <label for="geometry_field">Geometry field</label>
-                <input required type="text" id="geometry_field" />
+            <input required type="text" id="geometry_field" value="coordinate" />
 
             <label>Layer type</label>
             <div>
-                <input type="radio" name="renderMethod" id="grid" value="grid" checked /><label for="grid"><small>Grid</small></label><br/>
-                <input type="radio" name="renderMethod" id="hex" value="hex"  /><label for="hex"><small>Hexagons</small></label><br/>
-                <input type="radio" name="renderMethod" id="hits" value="hits" /><label for="hits"><small>Documents</small></label>
+                <input type="radio" name="renderMethod" id="grid" value="grid" checked /><label
+                    for="grid"><small>Grid</small></label><br />
+                <input type="radio" name="renderMethod" id="hex" value="hex" /><label
+                    for="hex"><small>Hexagons</small></label><br />
+                <input type="radio" name="renderMethod" id="hits" value="hits" /><label
+                    for="hits"><small>Documents</small></label>
+                <input type="radio" name="renderMethod" id="heat" value="heat" /><label
+                    for="heat"><small>Heat</small></label>
             </div>
 
             <label for="search">Search</label>
-                <input required type="text" id="search" />
+            <input required type="text" id="search" />
 
             <input type="button" id="show_data" value="Show" onclick="showLayer()" />
         </div>
-    </fieldset>
-</div>
-<div id="map"></div>
-<script>
+        </fieldset>
+    </div>
+    <div id="map"></div>
+    <script>
 
+        let loaded = false;
 
-    let loaded = false;
-
-
-    const map = new maplibregl.Map({
-        container: 'map',
-        center: [0, 0],
-        zoom: 1.28
-    });
-    map.addSource('roadmap', {
-        type: 'raster',
-        tiles: ['https://basemap.nationalmap.gov/arcgis/rest/services/USGSTopo/MapServer/tile/{z}/{y}/{x}'],
-        tileSize: 256,
-        scheme: 'xyz',
-    });
-
-    map.addLayer({
-        id: 'base-layer',
-        type: 'raster',
-        source: 'roadmap',
-    });
-
-    map.on('load', function () {
-        loaded = true;
-    });
-
-    function showLayer() {
-        if (!loaded) {
-            return;
-        }
-
-        const indexName = document.getElementById('index').value;
-        const geometryFieldName = document.getElementById('geometry_field').value;
-        const renderMethod = document.querySelector( 'input[name="renderMethod"]:checked' ).value;
-        const searchQuery = document.getElementById('search').value;
-
-        if (!indexName) {
-            alert('Cannot show layer. Please set "Elasticsearch index name"');
-            return;
-        }
-        if (!indexName || !geometryFieldName) {
-            alert('Cannot show layer. Please set "Field name of geometry"');
-            return;
-        }
-
-        const sourceName = 'es_mvt'; // arbitrary value, you can use any string you like
-        const fillStyle = 'layer_fill'; // arbitrary value, you can use any string you like
-        const outlineStyle = 'layer_line'; // arbitrary value, you can use any string you like
-        const circleStyle = 'layer_point'; /// arbitrary value, you can use any string you like
-        // Elasticsearch vector tile API returns tiles with 3 layers
-        // "hits": Contains a feature for each document (hit) matching search criteria.
-        // "aggs": Contains a feature for each bucket returned from geotile_grid or geohex_grid aggregation.
-        // "meta": Contains a single feature with meta data about the feature properties.
-        //         These are useful for calculating dynamic style ranges but not used in this example.
-        // 
-        // 'vector' layer specification requires "source-layer" property. This property identifies the layer to display from the tile.
-        const sourceLayer = renderMethod === "grid" || renderMethod === "hex" ? "aggs" : "hits"; // not arbitrary value - must be layer name provided from tile
-
-        if (map.getSource(sourceName)) {
-            map.removeLayer(outlineStyle);
-            map.removeLayer(fillStyle);
-            map.removeLayer(circleStyle);
-            map.removeSource(sourceName);
-        }
-
-        map.addSource(sourceName, {
-            'type': 'vector',
-            'tiles': [
-                `http://localhost/tile?index=${indexName}&geometry=${geometryFieldName}&renderMethod=${renderMethod}&x={x}&y={y}&z={z}&searchQuery=${searchQuery}`
-            ],
-            'minzoom': 0,
-            'maxzoom': 24
+        const map = new maplibregl.Map({
+            container: 'map',
+            center: [106.085, 16.417],
+            style: 'https://api.maptiler.com/maps/streets/style.json?key=get_your_own_OpIi9ZULNHzrESv6T2vL',
+            zoom: 5
         });
 
-        const fillColor = 'rgb(255,0,0)';
-        const fillOpacity = 0.5;
-        const strokeColor = 'rgb(255,0,0)';
-        const strokeOpacity = 1;
-        const strokeWidth = 1;
+        // Bản đồ nền
+        // map.addSource('roadmap', {
+        //     type: 'raster',
+        //     tiles: ['https://basemap.nationalmap.gov/arcgis/rest/services/USGSTopo/MapServer/tile/{z}/{y}/{x}'],
+        //     tileSize: 256,
+        //     scheme: 'xyz',
+        // });
 
-        map.addLayer(
-            {
-                'id': outlineStyle,
-                'type': 'line',
-                'source': sourceName,
-                'source-layer': sourceLayer,
-                'paint': {
-                    'line-opacity': strokeOpacity,
-                    'line-color': strokeColor,
-                    'line-width': 1,
-                }
+        // map.addLayer({
+        //     id: 'base-layer',
+        //     type: 'raster',
+        //     source: 'roadmap',
+        // });
+
+        map.on('load', function () {
+            loaded = true;
+        });
+
+        function showLayer() {
+            if (!loaded) {
+                return;
             }
-        );
-        map.setFilter(outlineStyle, [
-            'any',
-            ['==', ['geometry-type'], 'Polygon'],
-            ['==', ['geometry-type'], 'MultiPolygon'],
-            ['==', ['geometry-type'], 'LineString'],
-            ['==', ['geometry-type'], 'MultiLineString'],
-        ]);
 
-        map.addLayer(
-            {
-                'id': fillStyle,
-                'type': 'fill',
-                'source': sourceName,
-                'source-layer': sourceLayer,
-                'paint': {
-                    'fill-opacity': fillOpacity,
-                    'fill-color': fillColor,
-                }
+            // Lấy giá trị từ DOM
+            const indexName = document.getElementById('index').value;
+            const geometryFieldName = document.getElementById('geometry_field').value;
+            const renderMethod = document.querySelector('input[name="renderMethod"]:checked').value;
+            const searchQuery = document.getElementById('search').value;
+
+            // Validate
+            if (!indexName) {
+                alert('Cannot show layer. Please set "Elasticsearch index name"');
+                return;
             }
-        );
-        map.setFilter(fillStyle, [
-            'any',
-            ['==', ['geometry-type'], 'Polygon'],
-            ['==', ['geometry-type'], 'MultiPolygon'],
-        ]);
-
-        map.addLayer(
-            {
-                'id': circleStyle,
-                'type': 'circle',
-                'source': sourceName,
-                'source-layer': sourceLayer,
-                'paint': {
-                    'circle-radius': 4,
-                    'circle-color': fillColor,
-                    'circle-opacity': fillOpacity,
-                    'circle-stroke-color': strokeColor,
-                    'circle-stroke-opacity': strokeOpacity,
-                    'circle-stroke-width': strokeWidth,
-                }
+            if (!indexName || !geometryFieldName) {
+                alert('Cannot show layer. Please set "Field name of geometry"');
+                return;
             }
-        );
-        map.setFilter(circleStyle, [
-            'any',
-            ['==', ['geometry-type'], 'Point'],
-            ['==', ['geometry-type'], 'MultiPoint'],
-        ]);
 
-    }
+            // arbitrary value, you can use any string you like
+            const sourceName = 'es_mvt';
+            const fillStyle = 'layer_fill';
+            const outlineStyle = 'layer_line';
+            const circleStyle = 'layer_point';
+            const heatStyle = 'layer_heat';
 
+            // Elasticsearch vector tile API returns tiles with 3 layers
+            // "hits": Contains a feature for each document (hit) matching search criteria.
+            // "aggs": Contains a feature for each bucket returned from geotile_grid or geohex_grid aggregation.
+            // "meta": Contains a single feature with meta data about the feature properties.
+            //         These are useful for calculating dynamic style ranges but not used in this example.
 
-    document.onkeydown = function (evt) {
-        var keyCode = evt
-            ? evt.which
+            // 'vector' layer specification requires "source-layer" property. This property identifies the layer to display from the tile.
+            const sourceLayer = renderMethod === "grid" || renderMethod === "hex" || renderMethod === "heat" ? "aggs" : "hits"; // not arbitrary value - must be layer name provided from tile
+
+            if (map.getSource(sourceName)) {
+                map.removeLayer(outlineStyle);
+                map.removeLayer(fillStyle);
+                map.removeLayer(circleStyle);
+                map.removeLayer(heatStyle);
+                map.removeSource(sourceName);
+            }
+
+            map.addSource(sourceName, {
+                'type': 'vector',
+                'tiles': [
+                    `http://localhost/tile?index=${indexName}&geometry=${geometryFieldName}&renderMethod=${renderMethod}&x={x}&y={y}&z={z}&searchQuery=${searchQuery}`
+                ],
+                'minzoom': 0,
+                'maxzoom': 24
+            });
+
+            const fillColor = 'rgb(255,0,0)';
+            const fillOpacity = 0.5;
+            const strokeColor = 'rgb(255,0,0)';
+            const strokeOpacity = 1;
+            const strokeWidth = 1;
+
+            if (renderMethod == 'grid') {
+                map.addLayer(
+                    {
+                        'id': outlineStyle,
+                        'type': 'line',
+                        'source': sourceName,
+                        'source-layer': sourceLayer,
+                        'paint': {
+                            'line-opacity': strokeOpacity,
+                            'line-color': strokeColor,
+                            'line-width': 1,
+                        }
+                    }
+                );
+                map.setFilter(outlineStyle, [
+                    'any',
+                    ['==', ['geometry-type'], 'Polygon'],
+                    ['==', ['geometry-type'], 'MultiPolygon'],
+                    ['==', ['geometry-type'], 'LineString'],
+                    ['==', ['geometry-type'], 'MultiLineString'],
+                ]);
+            }
+
+            if (renderMethod == 'hex') {
+                map.addLayer(
+                    {
+                        'id': fillStyle,
+                        'type': 'fill',
+                        'source': sourceName,
+                        'source-layer': sourceLayer,
+                        'paint': {
+                            'fill-opacity': fillOpacity,
+                            'fill-color': fillColor,
+                        }
+                    }
+                );
+                map.setFilter(fillStyle, [
+                    'any',
+                    ['==', ['geometry-type'], 'Polygon'],
+                    ['==', ['geometry-type'], 'MultiPolygon'],
+                ]);
+            }
+
+            if (renderMethod == 'hits') {
+                map.addLayer(
+                    {
+                        'id': circleStyle,
+                        'type': 'circle',
+                        'source': sourceName,
+                        'source-layer': sourceLayer,
+                        'paint': {
+                            'circle-radius': 4,
+                            'circle-color': fillColor,
+                            'circle-opacity': fillOpacity,
+                            'circle-stroke-color': strokeColor,
+                            'circle-stroke-opacity': strokeOpacity,
+                            'circle-stroke-width': strokeWidth,
+                        }
+                    }
+                );
+                map.setFilter(circleStyle, [
+                    'any',
+                    ['==', ['geometry-type'], 'Point'],
+                    ['==', ['geometry-type'], 'MultiPoint'],
+                ]);
+            }
+
+            if (renderMethod == 'heat') {
+                map.addLayer(
+                    {
+                        'id': heatStyle,
+                        'type': 'heatmap',
+                        'source': sourceName,
+                        'source-layer': sourceLayer,
+                        'maxzoom': 9,
+                        'paint': {
+                            // Increase the heatmap weight based on frequency and property magnitude
+                            'heatmap-weight': [
+                                'interpolate',
+                                ['linear'],
+                                ['get', 'mag'],
+                                0,
+                                0,
+                                6,
+                                1
+                            ],
+                            // Increase the heatmap color weight weight by zoom level
+                            // heatmap-intensity is a multiplier on top of heatmap-weight
+                            'heatmap-intensity': [
+                                'interpolate',
+                                ['linear'],
+                                ['zoom'],
+                                0,
+                                1,
+                                9,
+                                3
+                            ],
+                            // Color ramp for heatmap.  Domain is 0 (low) to 1 (high).
+                            // Begin color ramp at 0-stop with a 0-transparancy color
+                            // to create a blur-like effect.
+                            'heatmap-color': [
+                                'interpolate',
+                                ['linear'],
+                                ['heatmap-density'],
+                                0,
+                                'rgba(33,102,172,0)',
+                                0.2,
+                                'rgb(103,169,207)',
+                                0.4,
+                                'rgb(209,229,240)',
+                                0.6,
+                                'rgb(253,219,199)',
+                                0.8,
+                                'rgb(239,138,98)',
+                                1,
+                                'rgb(178,24,43)'
+                            ],
+                            // Adjust the heatmap radius by zoom level
+                            'heatmap-radius': [
+                                'interpolate',
+                                ['linear'],
+                                ['zoom'],
+                                0,
+                                2,
+                                9,
+                                20
+                            ],
+                            // Transition from heatmap to circle layer by zoom level
+                            'heatmap-opacity': [
+                                'interpolate',
+                                ['linear'],
+                                ['zoom'],
+                                7,
+                                1,
+                                9,
+                                0
+                            ]
+                        }
+                    }
+                );
+                map.setFilter(heatStyle, [
+                    'any',
+                    ['==', ['geometry-type'], 'Polygon'],
+                    ['==', ['geometry-type'], 'MultiPolygon'],
+                    ['==', ['geometry-type'], 'LineString'],
+                    ['==', ['geometry-type'], 'MultiLineString'],
+                ]);
+            }
+        }
+
+        document.onkeydown = function (evt) {
+            var keyCode = evt
                 ? evt.which
-                : evt.keyCode
-            : event.keyCode;
-        if (keyCode == 13) { showLayer(); }
-    };
-</script>
+                    ? evt.which
+                    : evt.keyCode
+                : event.keyCode;
+            if (keyCode == 13) { showLayer(); }
+        };
+    </script>
 </body>
+
 </html>

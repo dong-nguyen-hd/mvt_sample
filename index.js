@@ -4,9 +4,8 @@ const querystring = require('querystring');
 const { Client } = require('@elastic/elasticsearch');
 const fs = require('fs');
 
-const elasticsearchHost = process.env.ES_URL || 'http://elastic:changeme@localhost:9200/';
+const elasticsearchHost = process.env.ES_URL || 'http://localhost:9200/';
 const client = new Client({ node: elasticsearchHost })
-
 
 const port = process.env.PORT || 80;
 const server = http.createServer(async function (request, response) {
@@ -25,7 +24,7 @@ const server = http.createServer(async function (request, response) {
 
         // Precision level for aggregation cells. Accepts 0-8. Larger numbers result in smaller aggregation cells. If 0, results don’t include the aggs layer.
         let gridPrecision = 0;
-        if (params.renderMethod === 'grid') {
+        if (params.renderMethod === 'grid' || params.renderMethod === 'heat') {
             gridPrecision = 8;
         } else if (params.renderMethod === 'hex') {
             gridPrecision = 5;
@@ -34,7 +33,7 @@ const server = http.createServer(async function (request, response) {
         const body = {
             exact_bounds: true,
             extent: 4096,
-            grid_agg: params.renderMethod === 'grid' ? 'geotile' : 'geohex',
+            grid_agg: params.renderMethod === 'grid' || params.renderMethod === 'heat' ? 'geotile' : 'geohex',
             grid_precision: gridPrecision,
             grid_type: 'grid',
             size: params.renderMethod === 'hits' ? 10000 : 0,// only populate the hits layer when necessary
@@ -49,6 +48,8 @@ const server = http.createServer(async function (request, response) {
             }
         }
 
+        console.log(body);
+
         try {
             const tile = await client.searchMvt({
                 index: params.index,
@@ -58,7 +59,6 @@ const server = http.createServer(async function (request, response) {
                 y: parseInt(params.y),
                 ...body,
             }, { meta: true });
-
             // set response header
             response.writeHead(tile.statusCode, {
                 'content-disposition': 'inline',
@@ -77,7 +77,7 @@ const server = http.createServer(async function (request, response) {
             response.write(e?.meta?.body ? JSON.stringify(e?.meta?.body) : '');
             response.end();
         }
-    } else if (request.url === '/'){
+    } else if (request.url === '/') {
         response.writeHead(200, { 'Content-Type': 'text/html' });
         response.write(fs.readFileSync('./index.html'));
         response.end('');
