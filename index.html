@@ -58,12 +58,14 @@
             <div>
                 <input type="radio" name="renderMethod" id="grid" value="grid" checked /><label
                     for="grid"><small>Grid</small></label><br />
-                <input type="radio" name="renderMethod" id="hex" value="hex" /><label
-                    for="hex"><small>Hexagons</small></label><br />
+                <!-- <input type="radio" name="renderMethod" id="hex" value="hex" /><label
+                    for="hex"><small>Hexagons</small></label><br /> -->
                 <input type="radio" name="renderMethod" id="hits" value="hits" /><label
-                    for="hits"><small>Documents</small></label>
+                    for="hits"><small>Documents</small></label><br />
                 <input type="radio" name="renderMethod" id="heat" value="heat" /><label
-                    for="heat"><small>Heat</small></label>
+                    for="heat"><small>Heat</small></label><br />
+                <input type="radio" name="renderMethod" id="cluster" value="cluster" /><label
+                    for="cluster"><small>Cluster</small></label><br />
             </div>
 
             <label for="search">Search</label>
@@ -130,6 +132,7 @@
             const outlineStyle = 'layer_line';
             const circleStyle = 'layer_point';
             const heatStyle = 'layer_heat';
+            const clustertyle = 'layer_cluster';
 
             // Elasticsearch vector tile API returns tiles with 3 layers
             // "hits": Contains a feature for each document (hit) matching search criteria.
@@ -138,13 +141,16 @@
             //         These are useful for calculating dynamic style ranges but not used in this example.
 
             // 'vector' layer specification requires "source-layer" property. This property identifies the layer to display from the tile.
-            const sourceLayer = renderMethod === "grid" || renderMethod === "hex" || renderMethod === "heat" ? "aggs" : "hits"; // not arbitrary value - must be layer name provided from tile
+            const sourceLayer = renderMethod === "grid" || renderMethod === "hex" || renderMethod === "heat" || renderMethod === "cluster" ? "aggs" : "hits"; // not arbitrary value - must be layer name provided from tile
 
             if (map.getSource(sourceName)) {
                 map.removeLayer(outlineStyle);
                 map.removeLayer(fillStyle);
                 map.removeLayer(circleStyle);
                 map.removeLayer(heatStyle);
+                map.removeLayer(clustertyle);
+                map.removeLayer("cluster-count");
+                map.removeLayer("unclustered-point");
                 map.removeSource(sourceName);
             }
 
@@ -154,7 +160,10 @@
                     `http://localhost/tile?index=${indexName}&geometry=${geometryFieldName}&renderMethod=${renderMethod}&x={x}&y={y}&z={z}&searchQuery=${searchQuery}`
                 ],
                 'minzoom': 0,
-                'maxzoom': 24
+                'maxzoom': 24,
+                "cluster": true,
+                "clusterMaxZoom": 14, // Max zoom to cluster points on
+                "clusterRadius": 50, // Radius of each cluster when clustering points (defaults to 50)
             });
 
             const fillColor = 'rgb(255,0,0)';
@@ -310,6 +319,68 @@
                     ['==', ['geometry-type'], 'LineString'],
                     ['==', ['geometry-type'], 'MultiLineString'],
                 ]);
+            }
+
+            if (renderMethod == 'cluster') {
+                map.addLayer({
+                    'id': clustertyle,
+                    'type': 'circle',
+                    'source': sourceName,
+                    'source-layer': sourceLayer,
+                    'filter': ['has', 'point_count'],
+                    'paint': {
+                        // Use step expressions (https://docs.mapbox.com/mapbox-gl-js/style-spec/#expressions-step)
+                        // with three steps to implement three types of circles:
+                        //   * Blue, 20px circles when point count is less than 100
+                        //   * Yellow, 30px circles when point count is between 100 and 750
+                        //   * Pink, 40px circles when point count is greater than or equal to 750
+                        'circle-color': [
+                            'step',
+                            ['get', 'point_count'],
+                            '#51bbd6',
+                            100,
+                            '#f1f075',
+                            750,
+                            '#f28cb1'
+                        ],
+                        'circle-radius': [
+                            'step',
+                            ['get', 'point_count'],
+                            20,
+                            100,
+                            30,
+                            750,
+                            40
+                        ]
+                    }
+                });
+
+                map.addLayer({
+                    id: 'cluster-count',
+                    type: 'symbol',
+                    'source': sourceName,
+                    'source-layer': sourceLayer,
+                    filter: ['has', 'point_count'],
+                    layout: {
+                        'text-field': '{point_count_abbreviated}',
+                        'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'],
+                        'text-size': 12
+                    }
+                });
+
+                map.addLayer({
+                    id: 'unclustered-point',
+                    type: 'circle',
+                    'source': sourceName,
+                    'source-layer': sourceLayer,
+                    filter: ['!', ['has', 'point_count']],
+                    paint: {
+                        'circle-color': '#11b4da',
+                        'circle-radius': 4,
+                        'circle-stroke-width': 1,
+                        'circle-stroke-color': '#fff'
+                    }
+                });
             }
         }
 

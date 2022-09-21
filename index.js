@@ -28,12 +28,14 @@ const server = http.createServer(async function (request, response) {
             gridPrecision = 8;
         } else if (params.renderMethod === 'hex') {
             gridPrecision = 5;
+        } else {
+            gridPrecision = 8;
         }
 
         const body = {
             exact_bounds: true,
             extent: 4096,
-            grid_agg: params.renderMethod === 'grid' || params.renderMethod === 'heat' ? 'geotile' : 'geohex',
+            grid_agg: params.renderMethod === 'grid' || params.renderMethod === 'hits' || params.renderMethod === 'heat' || params.renderMethod === 'cluster' ? 'geotile' : 'geohex',
             grid_precision: gridPrecision,
             grid_type: 'grid',
             size: params.renderMethod === 'hits' ? 10000 : 0,// only populate the hits layer when necessary
