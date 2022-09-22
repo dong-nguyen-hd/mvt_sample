@@ -2,6 +2,7 @@
 <html data-theme="light">
 
 <head>
+    <meta charset=utf-8 />
     <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
     <link rel="icon" href="https://elastic.co/favicon.ico" type="image/x-icon">
     <script src='https://unpkg.com/maplibre-gl@1.15.2/dist/maplibre-gl.js'></script>
@@ -69,7 +70,7 @@
             </div>
 
             <label for="search">Search</label>
-            <input required type="text" id="search" />
+            <input required type="text" id="search" value='{ "match": { "address": "Địa chỉ" }}'/>
 
             <input type="button" id="show_data" value="Show" onclick="showLayer()" />
         </div>

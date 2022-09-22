@@ -32,20 +32,36 @@ const server = http.createServer(async function (request, response) {
             gridPrecision = 8;
         }
 
+        // const body = {
+        //     exact_bounds: false,
+        //     extent: 4096,
+        //     grid_agg: params.renderMethod === 'grid' || params.renderMethod === 'hits' || params.renderMethod === 'heat' || params.renderMethod === 'cluster' ? 'geotile' : 'geohex',
+        //     grid_precision: gridPrecision,
+        //     grid_type: 'grid',
+        //     size: params.renderMethod === 'hits' ? 10000 : 0,// only populate the hits layer when necessary
+        //     track_total_hits: false,
+        //     query: params.searchQuery ? { //use Lucene query_string syntax
+        //         "query_string": {
+        //             "query": params.searchQuery,
+        //             "analyze_wildcard": true
+        //         }
+        //     } : {
+        //         "match_all": {}
+        //     }
+        // }
+
+        console.log(typeof params.searchQuery);
+        console.log(JSON.parse(params.searchQuery));
+
         const body = {
-            exact_bounds: true,
+            exact_bounds: false,
             extent: 4096,
             grid_agg: params.renderMethod === 'grid' || params.renderMethod === 'hits' || params.renderMethod === 'heat' || params.renderMethod === 'cluster' ? 'geotile' : 'geohex',
             grid_precision: gridPrecision,
             grid_type: 'grid',
             size: params.renderMethod === 'hits' ? 10000 : 0,// only populate the hits layer when necessary
             track_total_hits: false,
-            query: params.searchQuery ? { //use Lucene query_string syntax
-                "query_string": {
-                    "query": params.searchQuery,
-                    "analyze_wildcard": true
-                }
-            } : {
+            query: params.searchQuery ? JSON.parse(params.searchQuery) : {
                 "match_all": {}
             }
         }
