@@ -50,9 +50,6 @@ const server = http.createServer(async function (request, response) {
         //     }
         // }
 
-        console.log(typeof params.searchQuery);
-        console.log(JSON.parse(params.searchQuery));
-
         const body = {
             exact_bounds: false,
             extent: 4096,
