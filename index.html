@@ -247,29 +247,28 @@
                         'type': 'heatmap',
                         'source': sourceName,
                         'source-layer': sourceLayer,
-                        'maxzoom': 9,
+                        'maxzoom': 20,
                         'paint': {
-                            'heatmap-weight': 1,
-                            'heatmap-intensity': 0.05,
+                            'heatmap-weight': ['/', ['get', '_count'], 10000], // Kibana adjust: max
                             'heatmap-color': [
                                 'interpolate',
                                 ['linear'],
                                 ['heatmap-density'],
                                 0,
-                                'rgba(33,102,172,0)',
-                                0.2,
-                                'rgb(103,169,207)',
-                                0.4,
-                                'rgb(209,229,240)',
-                                0.6,
-                                'rgb(253,219,199)',
-                                0.8,
-                                'rgb(239,138,98)',
-                                1,
-                                'rgb(178,24,43)'
+                                'rgba(0, 0, 255, 0)',
+                                0.1,
+                                'rgb(65, 105, 225)',
+                                0.28,
+                                'rgb(0, 256, 256)',
+                                0.45999999999999996,
+                                'rgb(0, 256, 0)',
+                                0.64,
+                                'rgb(256, 256, 0)',
+                                0.82,
+                                'rgb(256, 0, 0)',
                             ],
-                            'heatmap-radius': 8,
-                            'heatmap-opacity': 0.8
+                            'heatmap-radius': 8, // Kibana adjust: 0, 8, 32, 64, 128
+                            'heatmap-opacity': 0.75
                         }
                     }
                 );
