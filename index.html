@@ -247,9 +247,18 @@
                         'type': 'heatmap',
                         'source': sourceName,
                         'source-layer': sourceLayer,
-                        'maxzoom': 20,
+                        'maxzoom': 10,
                         'paint': {
-                            'heatmap-weight': ['/', ['get', '_count'], 10000], // Kibana adjust: max
+                            'heatmap-weight': ['/', ['get', '_count'], 10000], // Kibana adjust: max (_count in properties)
+                            'heatmap-intensity': [
+                                'interpolate',
+                                ['linear'],
+                                ['zoom'], // return level zoom
+                                0, // level zoom
+                                1, // level weight
+                                9, // lv zoom
+                                3 // lv weight
+                            ],
                             'heatmap-color': [
                                 'interpolate',
                                 ['linear'],
