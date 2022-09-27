@@ -35,16 +35,24 @@ const server = http.createServer(async function (request, response) {
         const body = {
             exact_bounds: false,
             extent: 4096,
-            buffer: 5,
+            buffer: 10,
             fields: ["name"],
             grid_agg: params.renderMethod === 'grid' || params.renderMethod === 'hits' || params.renderMethod === 'heat' || params.renderMethod === 'cluster' ? 'geotile' : 'geohex',
-            grid_precision: 7,//gridPrecision,
+            grid_precision: gridPrecision,
             grid_type: 'grid',
             size: params.renderMethod === 'hits' ? 10000 : 0,// only populate the hits layer when necessary
             track_total_hits: false,
+            with_labels: false,
             query: params.searchQuery ? JSON.parse(params.searchQuery) : {
                 "match_all": {}
-            }
+            },
+            // aggs: {
+            //     "number_average": {
+            //         "avg": {
+            //             "field": "number"
+            //         }
+            //     }
+            // }
         }
 
         console.log(body);
