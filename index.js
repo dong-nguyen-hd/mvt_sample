@@ -88,6 +88,15 @@ const server = http.createServer(async function (request, response) {
         response.writeHead(200, { 'Content-Type': 'text/html' });
         response.write(fs.readFileSync('./index.html'));
         response.end('');
+    } else if (request.url == '/style.css') {
+        response.setHeader('Content-type', 'text/css');
+        response.write(fs.readFileSync('style.css'));
+        response.end()
+    }
+    else if (request.url == '/script.js') {
+        response.setHeader('type', 'text/javascript');
+        response.write(fs.readFileSync('script.js'));
+        response.end()
     } else {
         response.writeHead(404);
         response.write('Page does not exist')
