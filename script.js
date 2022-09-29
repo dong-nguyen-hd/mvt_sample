@@ -8,6 +8,9 @@ const map = new maplibregl.Map({
     zoom: 5
 });
 
+// disable map rotation using right click + drag
+map.dragRotate.disable();
+
 map.on('load', function () {
     loaded = true;
 });
@@ -17,13 +20,13 @@ function showLayer() {
         return;
     }
 
-    // Lấy giá trị từ DOM
+    // Get value from DOM
     const indexName = document.getElementById('index').value;
     const geometryFieldName = document.getElementById('geometry_field').value;
     const renderMethod = document.querySelector('input[name="renderMethod"]:checked').value;
     const searchQuery = document.getElementById('search').value;
 
-    // Validate
+    // Validate data
     if (!indexName) {
         alert('Cannot show layer. Please set "Elasticsearch index name"');
         return;
@@ -33,7 +36,7 @@ function showLayer() {
         return;
     }
 
-    // arbitrary value, you can use any string you like
+    // Arbitrary value, you can use any string you like
     const sourceName = 'es_mvt';
     const fillStyle = 'layer_fill';
     const outlineStyle = 'layer_line';
@@ -50,7 +53,7 @@ function showLayer() {
     //         These are useful for calculating dynamic style ranges but not used in this example.
 
     // 'vector' layer specification requires "source-layer" property. This property identifies the layer to display from the tile.
-    const sourceLayer = renderMethod === "grid" || renderMethod === "hex" || renderMethod === "heat" || renderMethod === "cluster" ? "aggs" : "hits"; // not arbitrary value - must be layer name provided from tile
+    const sourceLayer = renderMethod === "hits" ? "hits" : "aggs"; // not arbitrary value - must be layer name provided from tile
 
     if (map.getSource(sourceName)) {
         map.removeLayer(outlineStyle);
@@ -69,10 +72,7 @@ function showLayer() {
             `http://localhost/tile?index=${indexName}&geometry=${geometryFieldName}&renderMethod=${renderMethod}&x={x}&y={y}&z={z}&searchQuery=${searchQuery}`
         ],
         'minzoom': 0,
-        'maxzoom': 24,
-        "cluster": true,
-        "clusterMaxZoom": 14, // Max zoom to cluster points on
-        "clusterRadius": 300, // Radius of each cluster when clustering points (defaults to 50)
+        'maxzoom': 29,
     });
 
     const fillColor = 'rgb(255,0,0)';
@@ -221,39 +221,36 @@ function showLayer() {
             'type': 'circle',
             'source': sourceName,
             'source-layer': sourceLayer,
-            'filter': [">=", ['get', '_count'], 3000],
-            //'filter': ['has', '_count'],
+            'filter': ['has', '_count'],
             'paint': {
-                'circle-color': 'green',
-                // 'circle-color': [
-                //     'step',
-                //     ['get', '_count'],
-                //     '#99ffcc',
-                //     100,
-                //     '#00ffff',
-                //     1000,
-                //     '#cc99ff',
-                //     2000,
-                //     '#ffcc66',
-                //     5000,
-                //     '#ff99cc'
-                // ],
-                'circle-radius': 100,
-                // 'circle-radius': [
-                //     'step',
-                //     ['get', '_count'],
-                //     0,
-                //     1,
-                //     10,
-                //     100,
-                //     10,
-                //     1000,
-                //     70,
-                //     2000,
-                //     80,
-                //     5000,
-                //     100
-                // ],
+                'circle-color': [
+                    'step',
+                    ['get', '_count'],
+                    '#99ffcc',
+                    500,
+                    '#00ffff',
+                    1000,
+                    '#cc99ff',
+                    2000,
+                    '#ffcc66',
+                    5000,
+                    '#ff99cc'
+                ],
+                'circle-radius': [
+                    'step',
+                    ['get', '_count'],
+                    0,
+                    1,
+                    10,
+                    100,
+                    20,
+                    1000,
+                    30,
+                    2000,
+                    35,
+                    5000,
+                    40
+                ],
                 "circle-stroke-width": 0.5,
                 "circle-stroke-color": "#ffffff",
             }
@@ -264,15 +261,15 @@ function showLayer() {
             type: 'symbol',
             'source': sourceName,
             'source-layer': sourceLayer,
-            //filter: ['has', '_count'],
-            'filter': [">=", ['get', '_count'], 3000],
+            'filter': ['has', '_count'],
             layout: {
                 'text-field': '{_count}',
                 'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'],
-                'text-size': 9
+                'text-size': 12
             }
         });
 
+        // filter if count == 1
         map.addLayer({
             id: unclusteredStyle,
             type: 'circle',

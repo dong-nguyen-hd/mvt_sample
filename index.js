@@ -24,23 +24,46 @@ const server = http.createServer(async function (request, response) {
 
         // Precision level for aggregation cells. Accepts 0-8. Larger numbers result in smaller aggregation cells. If 0, results don’t include the aggs layer.
         let gridPrecision = 0;
-        if (params.renderMethod === 'grid' || params.renderMethod === 'heat') {
+        let buffer = 5;
+        let size = 10000; // default
+        let gridType = ["grid", "point", "centroid"];
+        let tempGridType = gridType[0];
+        if (params.renderMethod === 'grid') {
             gridPrecision = 8;
+            buffer = 5;
+            size = 0;
+            tempGridType = gridType[0];
+        } else if (params.renderMethod === 'heat') {
+            gridPrecision = 8;
+            buffer = 10;
+            size = 0;
+            tempGridType = gridType[0];
         } else if (params.renderMethod === 'hex') {
             gridPrecision = 5;
-        } else {
-            gridPrecision = 8;
+            buffer = 5;
+            size = 0;
+            tempGridType = gridType[0];
+        } else if (params.renderMethod === 'cluster') {
+            gridPrecision = 1;
+            buffer = 0;
+            size = 0;
+            tempGridType = gridType[2];
+        } else if (params.renderMethod === 'hits') {
+            gridPrecision = 0;
+            buffer = 0;
+            size = 10000;
+            tempGridType = gridType[0];
         }
 
         const body = {
             exact_bounds: false,
             extent: 4096,
-            buffer: 10,
-            fields: ["name"],
-            grid_agg: params.renderMethod === 'grid' || params.renderMethod === 'hits' || params.renderMethod === 'heat' || params.renderMethod === 'cluster' ? 'geotile' : 'geohex',
+            buffer: buffer,
+            fields: ["name", "fuel"],
+            grid_agg: params.renderMethod !== 'hex' ? 'geotile' : 'geohex',
             grid_precision: gridPrecision,
-            grid_type: 'grid',
-            size: params.renderMethod === 'hits' ? 10000 : 0,// only populate the hits layer when necessary
+            grid_type: tempGridType,
+            size: size,
             track_total_hits: false,
             with_labels: false,
             query: params.searchQuery ? JSON.parse(params.searchQuery) : {
