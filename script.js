@@ -234,25 +234,28 @@ function showLayer() {
                     2000,
                     '#ffcc66',
                     5000,
-                    '#ff99cc'
+                    '#FF99CC'
                 ],
                 'circle-radius': [
                     'step',
                     ['get', '_count'],
                     0,
                     1,
-                    10,
+                    15,
                     100,
                     20,
+                    500,
+                    25,
                     1000,
                     30,
-                    2000,
+                    3000,
                     35,
                     5000,
                     40
                 ],
                 "circle-stroke-width": 0.5,
                 "circle-stroke-color": "#ffffff",
+                "circle-opacity": 0.75
             }
         });
 
