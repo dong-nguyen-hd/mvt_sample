@@ -29,11 +29,16 @@ const server = http.createServer(async function (request, response) {
         let gridType = ["grid", "point", "centroid"];
         let tempGridType = gridType[0];
         if (params.renderMethod === 'grid') {
-            gridPrecision = 8;
+            gridPrecision = 1;
             buffer = 5;
             size = 0;
             tempGridType = gridType[0];
-        } else if (params.renderMethod === 'heat') {
+        } else if (params.renderMethod === 'heat-hits') {
+            gridPrecision = 0;
+            buffer = 5;
+            size = 10000;
+            tempGridType = gridType[0];
+        } else if (params.renderMethod === 'heat-aggs') {
             gridPrecision = 8;
             buffer = 10;
             size = 0;
@@ -59,7 +64,7 @@ const server = http.createServer(async function (request, response) {
             exact_bounds: false,
             extent: 4096,
             buffer: buffer,
-            fields: ["name", "fuel"],
+            fields: ["number", "fuel"],
             grid_agg: params.renderMethod !== 'hex' ? 'geotile' : 'geohex',
             grid_precision: gridPrecision,
             grid_type: tempGridType,
@@ -74,7 +79,9 @@ const server = http.createServer(async function (request, response) {
             //         "avg": {
             //             "field": "number"
             //         }
-            //     }
+            //     },
+            //     "max_number": { "max": { "field": "number" } },
+            //     "min_number": { "min": { "field": "number" } }
             // }
         }
 

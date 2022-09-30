@@ -15,7 +15,7 @@ map.on('load', function () {
     loaded = true;
 });
 
-function showLayer() {
+async function showLayer() {
     if (!loaded) {
         return;
     }
@@ -53,7 +53,7 @@ function showLayer() {
     //         These are useful for calculating dynamic style ranges but not used in this example.
 
     // 'vector' layer specification requires "source-layer" property. This property identifies the layer to display from the tile.
-    const sourceLayer = renderMethod === "hits" ? "hits" : "aggs"; // not arbitrary value - must be layer name provided from tile
+    const sourceLayer = renderMethod === "hits" || renderMethod === "heat-hits" ? "hits" : "aggs"; // not arbitrary value - must be layer name provided from tile
 
     if (map.getSource(sourceName)) {
         map.removeLayer(outlineStyle);
@@ -148,7 +148,7 @@ function showLayer() {
         ]);
     }
 
-    if (renderMethod == 'heat') {
+    if (renderMethod == 'heat-aggs') {
         map.addLayer(
             {
                 'id': heatStyle,
@@ -190,6 +190,80 @@ function showLayer() {
                         3,
                         30,
                         4.5
+                    ],
+                    'heatmap-color': [
+                        'interpolate',
+                        ['linear'],
+                        ['heatmap-density'],
+                        0,
+                        'rgba(0, 0, 255, 0)',
+                        0.1,
+                        'rgb(65, 105, 225)',
+                        0.28,
+                        'rgb(0, 256, 256)',
+                        0.45999999999999996,
+                        'rgb(0, 256, 0)',
+                        0.64,
+                        'rgb(256, 256, 0)',
+                        0.82,
+                        'rgb(256, 0, 0)',
+                    ],
+                    'heatmap-radius': 8, // Kibana adjust: 0, 8, 32, 64, 128
+                    'heatmap-opacity': 0.75
+                }
+            }
+        );
+    }
+
+    if (renderMethod == 'heat-hits') {
+        let obj = {
+            "aggs": {
+                "max_number": {
+                    "max": {
+                        "field": "number"
+                    }
+                },
+                "min_number": {
+                    "min": {
+                        "field": "number"
+                    }
+                }
+            }
+        }
+        const response = await fetch(
+            'http://localhost:9200/location/_search?size=0',
+            {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(obj)
+            }
+        );
+
+        let result = await response.json();
+
+        let maxValue = result.aggregations.max_number.value;
+        let minValue = result.aggregations.min_number.value;
+
+        map.addLayer(
+            {
+                'id': heatStyle,
+                'type': 'heatmap',
+                'source': sourceName,
+                'source-layer': sourceLayer,
+                'filter': ['has', 'number'],
+                'maxzoom': 21,
+                'paint': {
+                    // Increase the heatmap weight based on frequency and property magnitude
+                    'heatmap-weight': [
+                        'interpolate',
+                        ['linear'],
+                        ['get', 'number'],
+                        minValue,
+                        0,
+                        maxValue,
+                        1
                     ],
                     'heatmap-color': [
                         'interpolate',
