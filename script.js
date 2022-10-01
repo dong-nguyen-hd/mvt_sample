@@ -148,48 +148,127 @@ async function showLayer() {
         ]);
     }
 
+    // if (renderMethod == 'heat-aggs') {
+    //     map.addLayer(
+    //         {
+    //             'id': heatStyle,
+    //             'type': 'heatmap',
+    //             'source': sourceName,
+    //             'source-layer': sourceLayer,
+    //             'maxzoom': 21,
+    //             'paint': {
+    //                 // Increase the heatmap weight based on frequency and property magnitude
+    //                 'heatmap-weight': [
+    //                     'interpolate',
+    //                     ['linear'],
+    //                     ['get', '_count'],
+    //                     10,
+    //                     0.05,
+    //                     100,
+    //                     0.1,
+    //                     500,
+    //                     0.2,
+    //                     1000,
+    //                     0.3,
+    //                     2500,
+    //                     0.5,
+    //                     4000,
+    //                     0.8,
+    //                     5000,
+    //                     1
+    //                 ],
+    //                 // Change weight point base on zoom level
+    //                 'heatmap-intensity': [
+    //                     'interpolate',
+    //                     ['linear'],
+    //                     ['zoom'], // return level zoom
+    //                     0, // level zoom
+    //                     0, // level weight
+    //                     10,
+    //                     1.5,
+    //                     20,
+    //                     3,
+    //                     30,
+    //                     4.5
+    //                 ],
+    //                 'heatmap-color': [
+    //                     'interpolate',
+    //                     ['linear'],
+    //                     ['heatmap-density'],
+    //                     0,
+    //                     'rgba(0, 0, 255, 0)',
+    //                     0.1,
+    //                     'rgb(65, 105, 225)',
+    //                     0.28,
+    //                     'rgb(0, 256, 256)',
+    //                     0.45999999999999996,
+    //                     'rgb(0, 256, 0)',
+    //                     0.64,
+    //                     'rgb(256, 256, 0)',
+    //                     0.82,
+    //                     'rgb(256, 0, 0)',
+    //                 ],
+    //                 'heatmap-radius': 8, // Kibana adjust: 0, 8, 32, 64, 128
+    //                 'heatmap-opacity': 0.75
+    //             }
+    //         }
+    //     );
+    // }
+
     if (renderMethod == 'heat-aggs') {
+        let obj = {
+            "aggs": {
+                "max_number": {
+                    "max": {
+                        "field": "number"
+                    }
+                },
+                "min_number": {
+                    "min": {
+                        "field": "number"
+                    }
+                }
+            }
+        }
+        const response = await fetch(
+            'http://localhost:9200/location/_search?size=0',
+            {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(obj)
+            }
+        );
+
+        let result = await response.json();
+
+        let maxValue = result.aggregations.max_number.value;
+        let minValue = result.aggregations.min_number.value;
+
         map.addLayer(
             {
                 'id': heatStyle,
                 'type': 'heatmap',
                 'source': sourceName,
                 'source-layer': sourceLayer,
-                'maxzoom': 21,
+                'maxzoom': 24,
                 'paint': {
-                    // Increase the heatmap weight based on frequency and property magnitude
                     'heatmap-weight': [
-                        'interpolate',
-                        ['linear'],
-                        ['get', '_count'],
-                        10,
-                        0.05,
-                        100,
-                        0.1,
-                        500,
-                        0.2,
-                        1000,
-                        0.3,
-                        2500,
-                        0.5,
-                        4000,
-                        0.8,
-                        5000,
-                        1
-                    ],
-                    // Change weight point base on zoom level
-                    'heatmap-intensity': [
-                        'interpolate',
-                        ['linear'],
-                        ['zoom'], // return level zoom
-                        0, // level zoom
-                        0, // level weight
-                        10,
-                        1.5,
-                        20,
-                        3,
-                        30,
-                        4.5
+                        'let',
+                        'weight_value',
+                        ['/', ['get', 'total_number.value'], ['get', '_count']],
+                        'max_value',
+                        ['get', 'max_number.value'],
+                        'min_value',
+                        ['get', 'min_number.value'],
+                        [
+                            'interpolate',
+                            ['linear'],
+                            ['var', 'weight_value'],
+                            minValue, 0.01,
+                            maxValue, 1
+                        ]
                     ],
                     'heatmap-color': [
                         'interpolate',
@@ -208,7 +287,7 @@ async function showLayer() {
                         0.82,
                         'rgb(256, 0, 0)',
                     ],
-                    'heatmap-radius': 8, // Kibana adjust: 0, 8, 32, 64, 128
+                    'heatmap-radius': 8,
                     'heatmap-opacity': 0.75
                 }
             }

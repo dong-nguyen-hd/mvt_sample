@@ -40,9 +40,9 @@ const server = http.createServer(async function (request, response) {
             tempGridType = gridType[0];
         } else if (params.renderMethod === 'heat-aggs') {
             gridPrecision = 8;
-            buffer = 10;
+            buffer = 20;
             size = 0;
-            tempGridType = gridType[0];
+            tempGridType = gridType[2];
         } else if (params.renderMethod === 'hex') {
             gridPrecision = 5;
             buffer = 5;
@@ -74,15 +74,16 @@ const server = http.createServer(async function (request, response) {
             query: params.searchQuery ? JSON.parse(params.searchQuery) : {
                 "match_all": {}
             },
-            // aggs: {
-            //     "number_average": {
-            //         "avg": {
-            //             "field": "number"
-            //         }
-            //     },
-            //     "max_number": { "max": { "field": "number" } },
-            //     "min_number": { "min": { "field": "number" } }
-            // }
+            aggs: {
+                "number_average": {
+                    "avg": {
+                        "field": "number"
+                    }
+                },
+                "max_number": { "max": { "field": "number" } },
+                "min_number": { "min": { "field": "number" } },
+                "total_number": { "sum": { "field": "number" } }
+            }
         }
 
         console.log(body);
