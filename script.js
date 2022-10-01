@@ -254,21 +254,29 @@ async function showLayer() {
                 'source-layer': sourceLayer,
                 'maxzoom': 24,
                 'paint': {
+                    // 'heatmap-weight': [
+                    //     'let',
+                    //     'weight_value',
+                    //     ['/', ['get', 'total_number.value'], ['get', '_count']],
+                    //     'max_value',
+                    //     ['get', 'max_number.value'],
+                    //     'min_value',
+                    //     ['get', 'min_number.value'],
+                    //     [
+                    //         'interpolate',
+                    //         ['linear'],
+                    //         ['var', 'weight_value'],
+                    //         minValue, 0.01,
+                    //         maxValue, 1
+                    //     ],
+                    // ],
                     'heatmap-weight': [
-                        'let',
-                        'weight_value',
-                        ['/', ['get', 'total_number.value'], ['get', '_count']],
-                        'max_value',
-                        ['get', 'max_number.value'],
-                        'min_value',
-                        ['get', 'min_number.value'],
-                        [
-                            'interpolate',
-                            ['linear'],
-                            ['var', 'weight_value'],
-                            minValue, 0.01,
-                            maxValue, 1
-                        ]
+                        'interpolate',
+                        ['linear'],
+                        ['get', 'number_average.value'],
+                        minValue, 0.01,
+                        maxValue, 1
+
                     ],
                     'heatmap-color': [
                         'interpolate',

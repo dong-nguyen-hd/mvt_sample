@@ -80,9 +80,9 @@ const server = http.createServer(async function (request, response) {
                         "field": "number"
                     }
                 },
-                "max_number": { "max": { "field": "number" } },
-                "min_number": { "min": { "field": "number" } },
-                "total_number": { "sum": { "field": "number" } }
+                // "max_number": { "max": { "field": "number" } },
+                // "min_number": { "min": { "field": "number" } },
+                // "total_number": { "sum": { "field": "number" } }
             }
         }
 
